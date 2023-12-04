@@ -40,6 +40,7 @@ DJANGO_APPS = [
 
 LOCAL_APPS = [
     'posts',
+    'users',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
