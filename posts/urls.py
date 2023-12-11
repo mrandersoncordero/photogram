@@ -11,7 +11,7 @@ app_name = 'posts'
 urlpatterns = [
     path(
         route='', 
-        view=views.list_posts, 
+        view=views.PostFeedView.as_view(), 
         name='feed'
     ),
 
