@@ -1,13 +1,12 @@
 """Users views module."""
 
 # Django
-from typing import Any
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import DetailView
+from django.views.generic import DetailView, FormView, UpdateView
 from django.shortcuts import render, redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 
 # Models
 from django.contrib.auth.models import User
@@ -33,6 +32,19 @@ class UserDetailView(LoginRequiredMixin, DetailView):
         context['posts'] = Post.objects.filter(user=user).order_by('-created')
         return context
 
+
+class SignupView(FormView):
+    """Users sign up view."""
+
+    template_name = 'users/signup.html'
+    form_class = SignupForm
+    success_url = reverse_lazy('users:login')
+
+    def form_valid(self, form):
+        """Save form data."""
+        form.save()
+        return super().form_valid(form)
+    
 @login_required
 def update_profile(request):
     """Update a user's profile view."""
@@ -61,24 +73,22 @@ def update_profile(request):
     })
 
 
-def signup(request):
-    """Signup view."""
+class UpdateProfileView(LoginRequiredMixin, UpdateView):
+    """Update profile view."""
+
+    template_name = 'users/update_profile.html'
+    model = Profile
+    fields = ['website', 'biography', 'phone_number', 'picture']
+
+    def get_object(self):
+        """Return user's profile"""
+        return self.request.user.profile
     
-    if request.method == 'POST':
-        form = SignupForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('login')
-    else:
-        form = SignupForm()
-    
-    return render(
-        request=request,
-        template_name='users/signup.html',
-        context={
-            'form': form
-        }
-    )
+
+    def get_success_url(self):
+        """Return to user's profile."""
+        username = self.object.user.username
+        return reverse('users:detail', kwargs={'username': username})
 
 
 def login_view(request):
