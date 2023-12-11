@@ -1,11 +1,12 @@
 """Users views module."""
 
 # Django
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import views as auth_views
 from django.views.generic import DetailView, FormView, UpdateView
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 
 # Models
@@ -14,7 +15,7 @@ from users.models import Profile
 from posts.models import Post
 
 # Forms
-from users.forms import ProfileForm, SignupForm
+from users.forms import SignupForm
 
 class UserDetailView(LoginRequiredMixin, DetailView):
     """User detail view."""
@@ -44,33 +45,6 @@ class SignupView(FormView):
         """Save form data."""
         form.save()
         return super().form_valid(form)
-    
-@login_required
-def update_profile(request):
-    """Update a user's profile view."""
-    profile = request.user.profile
-
-    if request.method == 'POST':
-        form = ProfileForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.cleaned_data
-
-            profile.website = data['website']
-            profile.phone_number = data['phone_number']
-            profile.biography = data['biography']
-            profile.picture = data['picture']
-            profile.save()
-
-            url = reverse('users:detail', kwargs={'username': request.user.username})
-            return redirect(url)
-    else:
-        form = ProfileForm()
-    
-    return render(request, 'users/update_profile.html', context={
-        'profile': profile,
-        'user': request.user,
-        'form': form
-    })
 
 
 class UpdateProfileView(LoginRequiredMixin, UpdateView):
@@ -90,24 +64,15 @@ class UpdateProfileView(LoginRequiredMixin, UpdateView):
         username = self.object.user.username
         return reverse('users:detail', kwargs={'username': username})
 
-
-def login_view(request):
+class LoginView(auth_views.LoginView):
     """Login view."""
 
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
+    template_name = 'users/login.html'
 
-        if user is not None:
-            login(request, user)
-            return redirect('posts:feed')
-        else:
-            return render(request, 'users/login.html', {'error': 'Invalid username and password'})
-    else:
-        return render(request, 'users/login.html')
+    def get_success_url(self):
+        return reverse('posts:feed')
 
-
+    
 @login_required
 def logout_view(request):
     logout(request)
