@@ -73,8 +73,8 @@ class LoginView(auth_views.LoginView):
         return reverse('posts:feed')
 
     
-@login_required
-def logout_view(request):
-    logout(request)
-    return redirect('users:login')
-    # Redirect to a success page.
+
+class LogoutView(LoginRequiredMixin, auth_views.LogoutView):
+    """Logout view."""
+
+    template_name = 'users/logged_out.html'
